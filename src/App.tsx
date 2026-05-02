@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
-import "./style.css";
 
-type Stage = "impression" | "order" | "approval" | "delivery" | "bonding";
 type Device = "labial" | "lingual" | "aligner" | "band" | "bite";
+type Stage = "impression" | "order" | "approval" | "delivery" | "bonding";
 
-type LabCard = {
+type LabItem = {
   id: string;
   patient: string;
   deviceCategory: Device;
@@ -19,7 +18,7 @@ const LOGIN = {
   password: "lab2026",
 };
 
-const devices: { value: Device; label: string }[] = [
+const DEVICE_ROWS: { value: Device; label: string }[] = [
   { value: "labial", label: "ラビアル" },
   { value: "lingual", label: "リンガル" },
   { value: "aligner", label: "アライナー" },
@@ -27,7 +26,7 @@ const devices: { value: Device; label: string }[] = [
   { value: "bite", label: "バイト" },
 ];
 
-const stages: { value: Stage; label: string }[] = [
+const STAGE_COLUMNS: { value: Stage; label: string }[] = [
   { value: "impression", label: "印象" },
   { value: "order", label: "発注（プリント）" },
   { value: "approval", label: "承認" },
@@ -35,7 +34,7 @@ const stages: { value: Stage; label: string }[] = [
   { value: "bonding", label: "装着" },
 ];
 
-const stageDurations: Record<Stage, number> = {
+const STAGE_DURATIONS: Record<Stage, number> = {
   impression: 1,
   order: 7,
   approval: 14,
@@ -43,7 +42,7 @@ const stageDurations: Record<Stage, number> = {
   bonding: 0,
 };
 
-const deviceNames: Record<Device, string[]> = {
+const DEVICE_DETAIL_OPTIONS: Record<Device, string[]> = {
   labial: ["メタルブラケット", "セラミックブラケット", "ホワイトワイヤー", "部分ラビアル"],
   lingual: ["フルリンガル", "上顎リンガル", "リンガル保定装置"],
   aligner: ["アライナー初回", "追加アライナー", "リファインメント"],
@@ -51,7 +50,7 @@ const deviceNames: Record<Device, string[]> = {
   bite: ["バイトプレート", "前歯部バイトターボ", "リンガルボタン関連"],
 };
 
-const initialCards: LabCard[] = [
+const initialItems: LabItem[] = [
   {
     id: "CARD-001",
     patient: "山田 花子",
@@ -97,70 +96,129 @@ const initialCards: LabCard[] = [
     fittingDate: "2026-05-10",
     visitDate: "2026-05-10",
   },
+  {
+    id: "CARD-006",
+    patient: "伊藤 さくら",
+    deviceCategory: "aligner",
+    deviceName: "追加アライナー",
+    stage: "order",
+    fittingDate: "2026-05-21",
+    visitDate: "2026-05-20",
+  },
+  {
+    id: "CARD-007",
+    patient: "小林 翔",
+    deviceCategory: "aligner",
+    deviceName: "リファインメント",
+    stage: "order",
+    fittingDate: "2026-05-24",
+    visitDate: "2026-05-23",
+  },
 ];
 
-function deviceLabel(value: Device) {
-  return devices.find((device) => device.value === value)?.label ?? value;
+function deviceLabel(value: string): string {
+  return DEVICE_ROWS.find((row) => row.value === value)?.label || value;
 }
 
-function stageLabel(value: Stage) {
-  return stages.find((stage) => stage.value === value)?.label ?? value;
+function stageLabel(value: string): string {
+  return STAGE_COLUMNS.find((column) => column.value === value)?.label || value;
 }
 
-function todayStart() {
+function todayStart(): Date {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
-function daysUntil(dateString: string) {
+function daysUntil(dateString: string): number {
+  if (!dateString) return 9999;
   const target = new Date(`${dateString}T00:00:00`);
   return Math.ceil((target.getTime() - todayStart().getTime()) / 86400000);
 }
 
-function remainingLeadDays(stage: Stage) {
-  const index = stages.findIndex((item) => item.value === stage);
-  return stages.slice(index, stages.length - 1).reduce((sum, item) => sum + stageDurations[item.value], 0);
+function remainingLeadDays(stage: Stage): number {
+  const stageIndex = STAGE_COLUMNS.findIndex((column) => column.value === stage);
+  if (stageIndex === -1) return 0;
+  return STAGE_COLUMNS.slice(stageIndex, STAGE_COLUMNS.length - 1).reduce((sum, column) => {
+    return sum + STAGE_DURATIONS[column.value];
+  }, 0);
 }
 
-function risk(card: LabCard) {
-  if (card.stage === "bonding") {
-    return { level: "done", label: "装着段階", message: "装着工程まで進んでいます", priority: 99 };
+function riskAssessment(item: LabItem) {
+  const need = remainingLeadDays(item.stage);
+  const remain = Math.min(daysUntil(item.visitDate), daysUntil(item.fittingDate));
+
+  if (item.stage === "bonding") {
+    return {
+      level: "done",
+      label: "装着段階",
+      message: "装着工程まで進んでいます",
+      priority: 99,
+    };
   }
 
-  const need = remainingLeadDays(card.stage);
-  const remain = Math.min(daysUntil(card.visitDate), daysUntil(card.fittingDate));
-
   if (remain < 0) {
-    return { level: "critical", label: "要至急対応", message: "来院日または装着日を超過しています", priority: 0 };
+    return {
+      level: "critical",
+      label: "要至急対応",
+      message: "来院日または装着日を超過しています",
+      priority: 0,
+    };
   }
 
   if (need > remain) {
-    return { level: "critical", label: "間に合わない可能性高", message: `残り必要日数${need}日に対して残り${remain}日です`, priority: 1 };
+    return {
+      level: "critical",
+      label: "間に合わない可能性高",
+      message: `残り必要日数${need}日に対して残り${remain}日です`,
+      priority: 1,
+    };
   }
 
   if (need === remain) {
-    return { level: "warning", label: "間に合わない可能性あり", message: `残り必要日数${need}日と残り${remain}日が同じです`, priority: 2 };
+    return {
+      level: "warning",
+      label: "間に合わない可能性あり",
+      message: `残り必要日数${need}日と残り${remain}日が同じです`,
+      priority: 2,
+    };
   }
 
   if (remain - need <= 2) {
-    return { level: "warning", label: "日程接近", message: `必要日数差が${remain - need}日しかありません`, priority: 3 };
+    return {
+      level: "warning",
+      label: "日程接近",
+      message: `必要日数差が${remain - need}日しかありません`,
+      priority: 3,
+    };
   }
 
-  return { level: "normal", label: "進行中", message: "現時点では日程に余裕があります", priority: 4 };
+  return {
+    level: "normal",
+    label: "進行中",
+    message: "現時点では日程に余裕があります",
+    priority: 4,
+  };
 }
 
-function dateLabel(dateString: string, type: "visit" | "fitting") {
-  const diff = daysUntil(dateString);
-  if (diff < 0) return `${Math.abs(diff)}日経過`;
-  if (diff === 0) return type === "visit" ? "本日来院予定" : "本日装着";
-  return type === "visit" ? `来院まで${diff}日` : `装着まで${diff}日`;
-}
-
-function dateClass(dateString: string) {
+function dateClassName(dateString: string): string {
   const diff = daysUntil(dateString);
   if (diff < 0) return "date danger";
   if (diff <= 2) return "date warning";
   return "date";
+}
+
+function fittingLabel(dateString: string): string {
+  const diff = daysUntil(dateString);
+  if (diff < 0) return `${Math.abs(diff)}日経過`;
+  if (diff === 0) return "本日装着";
+  return `装着まで${diff}日`;
+}
+
+function visitLabel(dateString: string): string {
+  const diff = daysUntil(dateString);
+  if (diff < 0) return `来院${Math.abs(diff)}日経過`;
+  if (diff === 0) return "本日来院予定";
+  return `来院まで${diff}日`;
 }
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
@@ -168,31 +226,40 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  function submit(event: React.FormEvent) {
+  function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (username === LOGIN.username && password === LOGIN.password) {
       sessionStorage.setItem("lab-progress-auth", "true");
       onLogin();
       return;
     }
+
     setError("ユーザー名またはパスワードが違います");
   }
 
   return (
-    <div className="loginPage">
-      <form className="loginCard" onSubmit={submit}>
+    <div className="login-page">
+      <form className="login-card" onSubmit={submit}>
         <h1>技工物 進行表</h1>
         <p>ログインして進捗管理画面を開きます</p>
+
         <label>
           ユーザー名
           <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="admin" autoComplete="username" />
         </label>
+
         <label>
           パスワード
           <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="パスワード" autoComplete="current-password" />
         </label>
+
         {error && <div className="error">{error}</div>}
-        <button type="submit" className="primary full">ログイン</button>
+
+        <button type="submit" className="primary full">
+          ログイン
+        </button>
+
         <div className="note">
           初期ログイン: admin / lab2026<br />
           本番ではVercel Authentication、Supabase Auth、Firebase Authなどを推奨します。
@@ -202,50 +269,59 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   );
 }
 
-function Summary({ title, value, sub }: { title: string; value: number; sub: string }) {
+function SummaryCard({ title, value, sub }: { title: string; value: number; sub: string }) {
   return (
-    <div className="summary">
-      <div className="summaryTitle">{title}</div>
-      <div className="summaryValue">{value}</div>
-      <div className="summarySub">{sub}</div>
+    <div className="summary-card">
+      <div className="summary-title">{title}</div>
+      <div className="summary-value">{value}</div>
+      <div className="summary-sub">{sub}</div>
     </div>
   );
 }
 
-function LabCardView({ card, onMove, onDelete }: { card: LabCard; onMove: (id: string, direction: number) => void; onDelete: (id: string) => void }) {
-  const status = risk(card);
-  const index = stages.findIndex((stage) => stage.value === card.stage);
-  const canBack = index > 0;
-  const canNext = index < stages.length - 1;
+function LabCard({ item, onMove, onDelete }: { item: LabItem; onMove: (id: string, direction: number) => void; onDelete: (id: string) => void }) {
+  const risk = riskAssessment(item);
+  const stageIndex = STAGE_COLUMNS.findIndex((stage) => stage.value === item.stage);
+  const canBack = stageIndex > 0;
+  const canNext = stageIndex < STAGE_COLUMNS.length - 1;
 
   return (
-    <div className={`labCard ${status.level}`}>
-      <div className="cardTop">
+    <div className={`lab-card ${risk.level}`}>
+      <div className="card-top">
         <div>
-          <div className="patient">👤 {card.patient}</div>
-          <div className="cardId">{card.id}</div>
+          <div className="patient">👤 {item.patient}</div>
+          <div className="card-id">{item.id}</div>
         </div>
         <div className="badges">
-          <span>{deviceLabel(card.deviceCategory)}</span>
-          <span className={status.level}>{status.label}</span>
+          <span>{deviceLabel(item.deviceCategory)}</span>
+          <span className={risk.level}>{risk.label}</span>
         </div>
       </div>
-      <div className="cardBody">
-        <div>📦 {card.deviceName}</div>
-        <div>📅 装着日 {card.fittingDate}</div>
-        <div className={dateClass(card.fittingDate)}>{dateLabel(card.fittingDate, "fitting")}</div>
-        <div>🗓️ 来院予定 {card.visitDate}</div>
-        <div className={dateClass(card.visitDate)}>{dateLabel(card.visitDate, "visit")}</div>
+
+      <div className="card-body">
+        <div>📦 {item.deviceName}</div>
+        <div>📅 装着日 {item.fittingDate}</div>
+        <div className={dateClassName(item.fittingDate)}>{fittingLabel(item.fittingDate)}</div>
+        <div>🗓️ 来院予定 {item.visitDate}</div>
+        <div className={dateClassName(item.visitDate)}>{visitLabel(item.visitDate)}</div>
       </div>
-      <div className="cardActions">
-        <button disabled={!canBack} onClick={() => onMove(card.id, -1)}>戻す</button>
-        <button className="primary" disabled={!canNext} onClick={() => onMove(card.id, 1)}>次へ</button>
+
+      <div className="card-actions">
+        <button disabled={!canBack} onClick={() => onMove(item.id, -1)}>
+          戻す
+        </button>
+        <button className="primary" disabled={!canNext} onClick={() => onMove(item.id, 1)}>
+          次へ
+        </button>
       </div>
-      {card.stage === "bonding" && (
+
+      {item.stage === "bonding" && (
         <button
-          className="deleteButton"
+          className="delete-button"
           onClick={() => {
-            if (window.confirm(`${card.patient}さんのカードを削除しますか？`)) onDelete(card.id);
+            if (window.confirm(`${item.patient}さんのカードを削除しますか？`)) {
+              onDelete(item.id);
+            }
           }}
         >
           装着完了として削除
@@ -257,13 +333,13 @@ function LabCardView({ card, onMove, onDelete }: { card: LabCard; onMove: (id: s
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(() => sessionStorage.getItem("lab-progress-auth") === "true");
-  const [cards, setCards] = useState<LabCard[]>(initialCards);
+  const [items, setItems] = useState<LabItem[]>(initialItems);
   const [query, setQuery] = useState("");
   const [deviceFilter, setDeviceFilter] = useState<Device | "all">("all");
   const [stageFilter, setStageFilter] = useState<Stage | "all">("all");
   const [scheduleFilter, setScheduleFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Omit<LabCard, "id">>({
+  const [form, setForm] = useState<Omit<LabItem, "id">>({
     patient: "",
     deviceCategory: "labial",
     deviceName: "メタルブラケット",
@@ -272,56 +348,98 @@ export default function App() {
     visitDate: "",
   });
 
-  const filtered = useMemo(() => {
-    const text = query.trim().toLowerCase();
-    return cards.filter((card) => {
-      const searchable = [card.patient, card.deviceName, deviceLabel(card.deviceCategory), stageLabel(card.stage), card.fittingDate, card.visitDate].join(" ").toLowerCase();
-      if (text && !searchable.includes(text)) return false;
-      if (deviceFilter !== "all" && card.deviceCategory !== deviceFilter) return false;
-      if (stageFilter !== "all" && card.stage !== stageFilter) return false;
-      if (scheduleFilter === "today") return daysUntil(card.visitDate) === 0 || daysUntil(card.fittingDate) === 0;
-      if (scheduleFilter === "soon") return (daysUntil(card.visitDate) >= 0 && daysUntil(card.visitDate) <= 3) || (daysUntil(card.fittingDate) >= 0 && daysUntil(card.fittingDate) <= 3);
-      if (scheduleFilter === "overdue") return card.stage !== "bonding" && (daysUntil(card.visitDate) < 0 || daysUntil(card.fittingDate) < 0);
+  const filteredItems = useMemo(() => {
+    const searchText = query.trim().toLowerCase();
+
+    return items.filter((item) => {
+      const searchable = [
+        item.patient,
+        item.deviceName,
+        deviceLabel(item.deviceCategory),
+        stageLabel(item.stage),
+        item.fittingDate,
+        item.visitDate,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      if (searchText && !searchable.includes(searchText)) return false;
+      if (deviceFilter !== "all" && item.deviceCategory !== deviceFilter) return false;
+      if (stageFilter !== "all" && item.stage !== stageFilter) return false;
+
+      const fittingDiff = daysUntil(item.fittingDate);
+      const visitDiff = daysUntil(item.visitDate);
+
+      if (scheduleFilter === "today") return fittingDiff === 0 || visitDiff === 0;
+      if (scheduleFilter === "soon") return (fittingDiff >= 0 && fittingDiff <= 3) || (visitDiff >= 0 && visitDiff <= 3);
+      if (scheduleFilter === "overdue") return item.stage !== "bonding" && (fittingDiff < 0 || visitDiff < 0);
+
       return true;
     });
-  }, [cards, query, deviceFilter, stageFilter, scheduleFilter]);
+  }, [items, query, deviceFilter, stageFilter, scheduleFilter]);
 
-  const urgent = useMemo(() => {
-    return filtered
-      .map((card) => ({ card, status: risk(card) }))
-      .filter(({ status }) => status.level === "critical" || status.level === "warning")
-      .sort((a, b) => a.status.priority - b.status.priority);
-  }, [filtered]);
+  const urgentItems = useMemo(() => {
+    return filteredItems
+      .map((item) => ({ item, risk: riskAssessment(item) }))
+      .filter(({ risk }) => risk.level === "critical" || risk.level === "warning")
+      .sort((a, b) => {
+        if (a.risk.priority !== b.risk.priority) return a.risk.priority - b.risk.priority;
+        const aMin = Math.min(daysUntil(a.item.visitDate), daysUntil(a.item.fittingDate));
+        const bMin = Math.min(daysUntil(b.item.visitDate), daysUntil(b.item.fittingDate));
+        return aMin - bMin;
+      });
+  }, [filteredItems]);
 
   const stats = useMemo(() => {
     return {
-      total: cards.length,
-      todayBonding: cards.filter((card) => card.stage === "bonding" && daysUntil(card.fittingDate) === 0).length,
-      approval: cards.filter((card) => card.stage === "approval").length,
-      soon: cards.filter((card) => (daysUntil(card.visitDate) >= 0 && daysUntil(card.visitDate) <= 3) || (daysUntil(card.fittingDate) >= 0 && daysUntil(card.fittingDate) <= 3)).length,
-      overdue: cards.filter((card) => card.stage !== "bonding" && (daysUntil(card.visitDate) < 0 || daysUntil(card.fittingDate) < 0)).length,
-      risk: cards.filter((card) => ["critical", "warning"].includes(risk(card).level)).length,
+      total: items.length,
+      todayBonding: items.filter((item) => item.stage === "bonding" && daysUntil(item.fittingDate) === 0).length,
+      approval: items.filter((item) => item.stage === "approval").length,
+      soon: items.filter((item) => {
+        const fittingDiff = daysUntil(item.fittingDate);
+        const visitDiff = daysUntil(item.visitDate);
+        return (fittingDiff >= 0 && fittingDiff <= 3) || (visitDiff >= 0 && visitDiff <= 3);
+      }).length,
+      overdue: items.filter((item) => item.stage !== "bonding" && (daysUntil(item.fittingDate) < 0 || daysUntil(item.visitDate) < 0)).length,
+      riskHigh: items.filter((item) => {
+        const risk = riskAssessment(item);
+        return risk.level === "critical" || risk.level === "warning";
+      }).length,
     };
-  }, [cards]);
+  }, [items]);
 
   function moveCard(id: string, direction: number) {
-    setCards((prev) =>
-      prev.map((card) => {
-        if (card.id !== id) return card;
-        const index = stages.findIndex((stage) => stage.value === card.stage);
-        const next = stages[index + direction];
-        return next ? { ...card, stage: next.value } : card;
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const currentIndex = STAGE_COLUMNS.findIndex((stage) => stage.value === item.stage);
+        const nextStage = STAGE_COLUMNS[currentIndex + direction];
+        if (!nextStage) return item;
+        return { ...item, stage: nextStage.value };
       })
     );
   }
 
   function deleteCard(id: string) {
-    setCards((prev) => prev.filter((card) => card.id !== id));
+    setItems((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function logout() {
+    sessionStorage.removeItem("lab-progress-auth");
+    setLoggedIn(false);
   }
 
   function addCard() {
     if (!form.patient || !form.fittingDate || !form.visitDate) return;
-    setCards((prev) => [...prev, { id: `CARD-${String(prev.length + 1).padStart(3, "0")}`, ...form }]);
+
+    setItems((prev) => [
+      ...prev,
+      {
+        id: `CARD-${String(prev.length + 1).padStart(3, "0")}`,
+        ...form,
+      },
+    ]);
+
     setModalOpen(false);
     setForm({
       patient: "",
@@ -333,45 +451,52 @@ export default function App() {
     });
   }
 
-  function logout() {
-    sessionStorage.removeItem("lab-progress-auth");
-    setLoggedIn(false);
+  if (!loggedIn) {
+    return <LoginScreen onLogin={() => setLoggedIn(true)} />;
   }
-
-  if (!loggedIn) return <LoginScreen onLogin={() => setLoggedIn(true)} />;
 
   return (
     <div className="page">
       <div className="container">
-        <header className="topBar">
+        <header className="top-bar">
           <div>
             <h1>技工物 進行表</h1>
-            <p>縦軸を装置カテゴリ、横軸を進行状況にしたマトリクス型の進捗ボード</p>
+            <p>装置カテゴリごとに独立した進捗表で、全装置表示時もカードが重ならない構成です。</p>
           </div>
-          <div className="topButtons">
+          <div className="top-actions">
             <button onClick={logout}>ログアウト</button>
-            <button className="primary" onClick={() => setModalOpen(true)}>+ カード追加</button>
+            <button className="primary" onClick={() => setModalOpen(true)}>
+              + カード追加
+            </button>
           </div>
         </header>
 
-        <section className="summaryGrid">
-          <Summary title="全カード数" value={stats.total} sub="現在管理中の技工物" />
-          <Summary title="本日装着" value={stats.todayBonding} sub="装着列かつ本日予定" />
-          <Summary title="承認待ち" value={stats.approval} sub="承認列にあるカード" />
-          <Summary title="日程が近い" value={stats.soon} sub="装着日または来院日が3日以内" />
-          <Summary title="遅延・要対応" value={stats.overdue} sub="未装着で日付超過" />
-          <Summary title="間に合わない可能性" value={stats.risk} sub="上部に自動表示されるカード" />
+        <section className="summary-grid">
+          <SummaryCard title="全カード数" value={stats.total} sub="現在管理中の技工物" />
+          <SummaryCard title="本日装着" value={stats.todayBonding} sub="装着列かつ本日予定" />
+          <SummaryCard title="承認待ち" value={stats.approval} sub="承認列にあるカード" />
+          <SummaryCard title="日程が近い" value={stats.soon} sub="装着日または来院日が3日以内" />
+          <SummaryCard title="遅延・要対応" value={stats.overdue} sub="未装着で日付超過" />
+          <SummaryCard title="間に合わない可能性" value={stats.riskHigh} sub="上部に自動表示されるカード" />
         </section>
 
         <section className="filters">
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="患者名・装置名・日付で検索" />
           <select value={deviceFilter} onChange={(event) => setDeviceFilter(event.target.value as Device | "all")}>
             <option value="all">全装置カテゴリ</option>
-            {devices.map((device) => <option key={device.value} value={device.value}>{device.label}</option>)}
+            {DEVICE_ROWS.map((row) => (
+              <option key={row.value} value={row.value}>
+                {row.label}
+              </option>
+            ))}
           </select>
           <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as Stage | "all")}>
             <option value="all">全進行状況</option>
-            {stages.map((stage) => <option key={stage.value} value={stage.value}>{stage.label}</option>)}
+            {STAGE_COLUMNS.map((column) => (
+              <option key={column.value} value={column.value}>
+                {column.label}
+              </option>
+            ))}
           </select>
           <select value={scheduleFilter} onChange={(event) => setScheduleFilter(event.target.value)}>
             <option value="all">全日程</option>
@@ -381,84 +506,117 @@ export default function App() {
           </select>
         </section>
 
-        {urgent.length > 0 && (
-          <section className="urgentPanel">
+        {urgentItems.length > 0 && (
+          <section className="urgent-panel">
             <h2>⚠ 来院日までに間に合わない可能性があるカード</h2>
-            <div className="urgentGrid">
-              {urgent.map(({ card, status }) => (
-                <div key={`urgent-${card.id}`} className={`urgentCard ${status.level}`}>
-                  <strong>{card.patient}</strong>
-                  <span>{status.label}</span>
-                  <p>{deviceLabel(card.deviceCategory)} / {card.deviceName}</p>
-                  <p>現在工程: {stageLabel(card.stage)}</p>
-                  <p>来院予定: {card.visitDate}</p>
-                  <p>装着予定: {card.fittingDate}</p>
-                  <small>{status.message}</small>
+            <div className="urgent-grid">
+              {urgentItems.map(({ item, risk }) => (
+                <div key={`urgent-${item.id}`} className={`urgent-card ${risk.level}`}>
+                  <div className="urgent-head">
+                    <strong>{item.patient}</strong>
+                    <span>{risk.label}</span>
+                  </div>
+                  <p>{deviceLabel(item.deviceCategory)} / {item.deviceName}</p>
+                  <p>現在工程: {stageLabel(item.stage)}</p>
+                  <p>来院予定: {item.visitDate}</p>
+                  <p>装着予定: {item.fittingDate}</p>
+                  <small>{risk.message}</small>
                 </div>
               ))}
             </div>
           </section>
         )}
 
-        <main className="matrixWrap">
-          <div className="matrix">
-            <div />
-            {stages.map((stage) => (
-              <div key={stage.value} className="stageHeader">
-                <strong>{stage.label}</strong>
-                <span>{filtered.filter((card) => card.stage === stage.value).length}</span>
-              </div>
-            ))}
+        <main className="device-sections">
+          {DEVICE_ROWS.filter((row) => deviceFilter === "all" || row.value === deviceFilter).map((row) => {
+            const rowItems = filteredItems.filter((item) => item.deviceCategory === row.value);
 
-            {devices.filter((device) => deviceFilter === "all" || device.value === deviceFilter).map((device) => (
-              <div className="matrixRow" key={device.value}>
-                <div className="deviceHeader">
-                  <strong>{device.label}</strong>
-                  <span>{filtered.filter((card) => card.deviceCategory === device.value).length}件</span>
+            return (
+              <section key={row.value} className="device-section">
+                <div className="device-section-header">
+                  <div>
+                    <h2>{row.label}</h2>
+                    <p>{rowItems.length}件</p>
+                  </div>
+                  <span>{row.label}</span>
                 </div>
-                {stages.map((stage) => {
-                  const cellCards = filtered.filter((card) => card.deviceCategory === device.value && card.stage === stage.value);
-                  return (
-                    <div key={`${device.value}-${stage.value}`} className="cell">
-                      {cellCards.length === 0 ? <div className="empty">カードなし</div> : cellCards.map((card) => (
-                        <LabCardView key={card.id} card={card} onMove={moveCard} onDelete={deleteCard} />
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+
+                <div className="stage-grid">
+                  {STAGE_COLUMNS.map((column) => {
+                    const columnItems = rowItems.filter((item) => item.stage === column.value);
+
+                    return (
+                      <div key={`${row.value}-${column.value}`} className="stage-cell">
+                        <div className="stage-cell-header">
+                          <strong>{column.label}</strong>
+                          <span>{columnItems.length}</span>
+                        </div>
+
+                        {columnItems.length === 0 ? (
+                          <div className="empty">カードなし</div>
+                        ) : (
+                          <div className="card-stack">
+                            {columnItems.map((item) => (
+                              <LabCard key={item.id} item={item} onMove={moveCard} onDelete={deleteCard} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </main>
       </div>
 
       {modalOpen && (
-        <div className="modalBackdrop" onClick={() => setModalOpen(false)}>
+        <div className="modal-backdrop" onClick={() => setModalOpen(false)}>
           <div className="modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modalHeader">
+            <div className="modal-header">
               <h2>新しいカードを登録</h2>
               <button onClick={() => setModalOpen(false)}>閉じる</button>
             </div>
-            <div className="modalGrid">
+
+            <div className="modal-grid">
               <input placeholder="患者名" value={form.patient} onChange={(event) => setForm({ ...form, patient: event.target.value })} />
               <input type="date" value={form.fittingDate} onChange={(event) => setForm({ ...form, fittingDate: event.target.value })} />
-              <select value={form.deviceCategory} onChange={(event) => {
-                const next = event.target.value as Device;
-                setForm({ ...form, deviceCategory: next, deviceName: deviceNames[next][0] });
-              }}>
-                {devices.map((device) => <option key={device.value} value={device.value}>{device.label}</option>)}
+              <select
+                value={form.deviceCategory}
+                onChange={(event) => {
+                  const next = event.target.value as Device;
+                  setForm({ ...form, deviceCategory: next, deviceName: DEVICE_DETAIL_OPTIONS[next][0] });
+                }}
+              >
+                {DEVICE_ROWS.map((row) => (
+                  <option key={row.value} value={row.value}>
+                    {row.label}
+                  </option>
+                ))}
               </select>
               <select value={form.deviceName} onChange={(event) => setForm({ ...form, deviceName: event.target.value })}>
-                {deviceNames[form.deviceCategory].map((name) => <option key={name} value={name}>{name}</option>)}
+                {DEVICE_DETAIL_OPTIONS[form.deviceCategory].map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
               </select>
               <input type="date" value={form.visitDate} onChange={(event) => setForm({ ...form, visitDate: event.target.value })} />
               <select value={form.stage} onChange={(event) => setForm({ ...form, stage: event.target.value as Stage })}>
-                {stages.map((stage) => <option key={stage.value} value={stage.value}>{stage.label}</option>)}
+                {STAGE_COLUMNS.map((column) => (
+                  <option key={column.value} value={column.value}>
+                    {column.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <div className="modalActions">
+
+            <div className="modal-actions">
               <button onClick={() => setModalOpen(false)}>キャンセル</button>
-              <button className="primary" onClick={addCard}>登録する</button>
+              <button className="primary" onClick={addCard}>
+                登録する
+              </button>
             </div>
           </div>
         </div>

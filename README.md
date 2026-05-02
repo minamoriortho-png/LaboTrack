@@ -5,6 +5,11 @@
 - ユーザー名: admin
 - パスワード: lab2026
 
+## 修正内容
+
+全装置カテゴリ表示時にカードが重なって見えない問題を修正しました。
+装置カテゴリごとに独立したセクションを縦並び表示するため、全装置表示でもカードが重なりません。
+
 ## Vercel設定
 
 このフォルダをGitHubリポジトリ直下に置く場合:
@@ -14,9 +19,9 @@
 - Output Directory: dist
 - Root Directory: 空欄
 
-リポジトリ直下にさらに `lab-progress-app-secure-delete` フォルダとして置く場合:
+リポジトリ直下にさらに `lab-progress-app-category-section-fixed` フォルダとして置く場合:
 
-- Root Directory: lab-progress-app-secure-delete
+- Root Directory: lab-progress-app-category-section-fixed
 
 ## 注意
 

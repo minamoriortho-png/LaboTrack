@@ -60,7 +60,7 @@ select {
   gap: 20px;
 }
 
-.topBar {
+.top-bar {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -68,32 +68,33 @@ select {
   flex-wrap: wrap;
 }
 
-.topBar h1 {
+.top-bar h1 {
   margin: 0;
   font-size: 32px;
 }
 
-.topBar p {
+.top-bar p {
   margin: 8px 0 0;
   color: #64748b;
 }
 
-.topButtons {
+.top-actions {
   display: flex;
   gap: 8px;
 }
 
-.summaryGrid {
+.summary-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
 }
 
-.summary,
+.summary-card,
 .filters,
-.urgentPanel,
-.stageHeader,
-.labCard,
+.urgent-panel,
+.device-section,
+.stage-cell,
+.lab-card,
 .modal {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -101,22 +102,22 @@ select {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.summary {
+.summary-card {
   padding: 16px;
 }
 
-.summaryTitle {
+.summary-title {
   font-size: 12px;
   color: #64748b;
 }
 
-.summaryValue {
+.summary-value {
   margin-top: 4px;
   font-size: 28px;
   font-weight: 800;
 }
 
-.summarySub {
+.summary-sub {
   margin-top: 4px;
   color: #94a3b8;
   font-size: 12px;
@@ -129,25 +130,25 @@ select {
   padding: 16px;
 }
 
-.urgentPanel {
+.urgent-panel {
   padding: 16px;
   border-color: #fecdd3;
   background: #fff1f2;
 }
 
-.urgentPanel h2 {
+.urgent-panel h2 {
   margin: 0 0 12px;
   color: #9f1239;
   font-size: 18px;
 }
 
-.urgentGrid {
+.urgent-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
-.urgentCard {
+.urgent-card {
   display: grid;
   gap: 6px;
   padding: 14px;
@@ -156,7 +157,13 @@ select {
   background: #ffffff;
 }
 
-.urgentCard span {
+.urgent-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.urgent-head span {
   width: fit-content;
   border-radius: 999px;
   padding: 4px 8px;
@@ -164,99 +171,109 @@ select {
   font-weight: 800;
 }
 
-.urgentCard.critical {
+.urgent-card.critical {
   border-color: #fda4af;
   background: #fff1f2;
 }
 
-.urgentCard.critical span {
+.urgent-card.critical span {
   background: #ffe4e6;
   color: #be123c;
 }
 
-.urgentCard.warning {
+.urgent-card.warning {
   border-color: #fcd34d;
   background: #fffbeb;
 }
 
-.urgentCard.warning span {
+.urgent-card.warning span {
   background: #fef3c7;
   color: #b45309;
 }
 
-.urgentCard p {
+.urgent-card p {
   margin: 0;
   font-size: 13px;
 }
 
-.urgentCard small {
+.urgent-card small {
   color: #475569;
 }
 
-.matrixWrap {
+.device-sections {
+  display: grid;
+  gap: 20px;
   overflow-x: auto;
+  padding-bottom: 4px;
 }
 
-.matrix {
-  min-width: 1300px;
-  display: grid;
-  gap: 12px;
+.device-section {
+  min-width: 1180px;
+  padding: 16px;
+  border-radius: 24px;
 }
 
-.matrix,
-.matrixRow {
-  grid-template-columns: 180px repeat(5, minmax(220px, 1fr));
-}
-
-.matrixRow {
-  display: grid;
-  gap: 12px;
-}
-
-.stageHeader {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+.device-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.stageHeader span {
+.device-section-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.device-section-header p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.device-section-header > span {
   border-radius: 999px;
   padding: 4px 8px;
   background: #f1f5f9;
-  font-size: 12px;
+  color: #334155;
+  font-size: 11px;
   font-weight: 800;
 }
 
-.deviceHeader {
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 16px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  background: #f1f5f9;
-}
-
-.deviceHeader span {
-  margin-top: 4px;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.cell {
-  min-height: 180px;
+.stage-grid {
   display: grid;
+  grid-template-columns: repeat(5, minmax(220px, 1fr));
   gap: 12px;
+  align-items: start;
+}
+
+.stage-cell {
+  min-height: 220px;
+  display: grid;
+  grid-template-rows: auto 1fr;
   align-content: start;
   padding: 12px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
   background: #f8fafc;
+  overflow: visible;
+}
+
+.stage-cell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.stage-cell-header span {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .empty {
@@ -268,28 +285,35 @@ select {
   color: #94a3b8;
 }
 
-.labCard {
+.card-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.lab-card {
   display: grid;
   gap: 12px;
   padding: 14px;
+  position: relative;
+  z-index: 1;
 }
 
-.labCard.critical {
+.lab-card.critical {
   border-color: #fda4af;
   background: #fff1f2;
 }
 
-.labCard.warning {
+.lab-card.warning {
   border-color: #fcd34d;
   background: #fffbeb;
 }
 
-.labCard.done {
+.lab-card.done {
   border-color: #86efac;
   background: #ecfdf5;
 }
 
-.cardTop {
+.card-top {
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -303,7 +327,7 @@ select {
   white-space: nowrap;
 }
 
-.cardId {
+.card-id {
   margin-top: 4px;
   color: #94a3b8;
   font-size: 11px;
@@ -342,7 +366,7 @@ select {
   color: #047857;
 }
 
-.cardBody {
+.card-body {
   display: grid;
   gap: 8px;
   color: #334155;
@@ -362,23 +386,23 @@ select {
   color: #e11d48;
 }
 
-.cardActions {
+.card-actions {
   display: flex;
   gap: 8px;
 }
 
-.cardActions button {
+.card-actions button {
   flex: 1;
 }
 
-.deleteButton {
+.delete-button {
   width: 100%;
   border-color: #fecdd3;
   background: #ffe4e6;
   color: #be123c;
 }
 
-.loginPage {
+.login-page {
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -386,7 +410,7 @@ select {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
-.loginCard {
+.login-card {
   width: 100%;
   max-width: 420px;
   display: grid;
@@ -398,18 +422,18 @@ select {
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
 }
 
-.loginCard h1 {
+.login-card h1 {
   margin: 0;
 }
 
-.loginCard p,
+.login-card p,
 .note {
   color: #64748b;
   font-size: 13px;
   line-height: 1.7;
 }
 
-.loginCard label {
+.login-card label {
   display: grid;
   gap: 6px;
   font-size: 13px;
@@ -421,7 +445,7 @@ select {
   font-size: 13px;
 }
 
-.modalBackdrop {
+.modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -437,33 +461,33 @@ select {
   padding: 20px;
 }
 
-.modalHeader,
-.modalActions {
+.modal-header,
+.modal-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
 }
 
-.modalHeader h2 {
+.modal-header h2 {
   margin: 0;
 }
 
-.modalGrid {
+.modal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 16px;
 }
 
-.modalActions {
+.modal-actions {
   justify-content: flex-end;
   margin-top: 16px;
 }
 
 @media (max-width: 1200px) {
-  .summaryGrid,
-  .urgentGrid {
+  .summary-grid,
+  .urgent-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 

@@ -1,29 +1,22 @@
-# 技工物 進行表
+# 技工物 進行表 localStorage版
 
 ## ログイン情報
 
 - ユーザー名: admin
 - パスワード: lab2026
 
-## 修正内容
+## 実装内容
 
-全装置カテゴリ表示時にカードが重なって見えない問題を修正しました。
-装置カテゴリごとに独立したセクションを縦並び表示するため、全装置表示でもカードが重なりません。
+- localStorage保存
+- リロード後もカード追加・移動・削除が保持されます
+- 装着段階カードの削除
+- 装置カテゴリ別セクション表示
+- カード追加時の日付ラベル明確化
+- 自由記入欄・メモ追加
+- スマホでは縦積み表示
 
 ## Vercel設定
-
-このフォルダをGitHubリポジトリ直下に置く場合:
 
 - Framework Preset: Vite
 - Build Command: npm run build
 - Output Directory: dist
-- Root Directory: 空欄
-
-リポジトリ直下にさらに `lab-progress-app-category-section-fixed` フォルダとして置く場合:
-
-- Root Directory: lab-progress-app-category-section-fixed
-
-## 注意
-
-このログインはフロントエンドだけの簡易ログインです。
-本番で患者情報を扱う場合は、Vercel Authentication、Supabase Auth、Firebase Authなどを導入してください。

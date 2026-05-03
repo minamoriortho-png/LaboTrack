@@ -1,26 +1,29 @@
-# 技工物 進行表 Supabase + Vercel 連携版
+# 技工物 進行表 Supabaseログイン修正版
 
-## 使い方
+## 重要
 
-1. SupabaseのSQL Editorで `supabase-schema.sql` の内容を実行
-2. Supabase Authenticationでログインユーザーを作成
-3. このフォルダをGitHubにアップロード
-4. VercelでGitHubリポジトリをデプロイ
+Supabase JSで使うProject URLは `/rest/v1/` なしです。
 
-## Supabase URL
-
-このコードでは以下のProject URLを使用しています。
-
+正:
 https://xiflbktnmjzwdiavfdgz.supabase.co
 
-※ supabase-jsでは `/rest/v1/` 付きのAPI URLではなく、Project URLを使います。
+誤:
+https://xiflbktnmjzwdiavfdgz.supabase.co/rest/v1/
 
 ## Vercel環境変数
 
-コード内にfallbackとして値を入れていますが、本番ではVercelのEnvironment Variablesにも入れてください。
-
 VITE_SUPABASE_URL=https://xiflbktnmjzwdiavfdgz.supabase.co
 VITE_SUPABASE_ANON_KEY=sb_publishable_paj79HmcbGKtvsIHdRHkjg_Nu1G53mp
+
+このZIPではfallbackとして上記値もコードに入れています。
+
+## 先にやること
+
+1. Supabase SQL Editorで `supabase-schema.sql` を実行
+2. Authentication > Users でユーザーを作成
+3. ユーザーのEmail confirmedを確認
+4. GitHubにアップ
+5. VercelでRedeploy
 
 ## Vercel設定
 

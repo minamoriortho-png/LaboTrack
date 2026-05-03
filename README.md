@@ -1,19 +1,26 @@
-# 技工物 進行表 localStorage版
+# 技工物 進行表 Supabase + Vercel 連携版
 
-## ログイン情報
+## 使い方
 
-- ユーザー名: admin
-- パスワード: lab2026
+1. SupabaseのSQL Editorで `supabase-schema.sql` の内容を実行
+2. Supabase Authenticationでログインユーザーを作成
+3. このフォルダをGitHubにアップロード
+4. VercelでGitHubリポジトリをデプロイ
 
-## 実装内容
+## Supabase URL
 
-- localStorage保存
-- リロード後もカード追加・移動・削除が保持されます
-- 装着段階カードの削除
-- 装置カテゴリ別セクション表示
-- カード追加時の日付ラベル明確化
-- 自由記入欄・メモ追加
-- スマホでは縦積み表示
+このコードでは以下のProject URLを使用しています。
+
+https://xiflbktnmjzwdiavfdgz.supabase.co
+
+※ supabase-jsでは `/rest/v1/` 付きのAPI URLではなく、Project URLを使います。
+
+## Vercel環境変数
+
+コード内にfallbackとして値を入れていますが、本番ではVercelのEnvironment Variablesにも入れてください。
+
+VITE_SUPABASE_URL=https://xiflbktnmjzwdiavfdgz.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_paj79HmcbGKtvsIHdRHkjg_Nu1G53mp
 
 ## Vercel設定
 

@@ -85,8 +85,13 @@ function remainingLeadDays(stage: string) {
 }
 
 function riskAssessment(card: Card): Risk {
-  if (card.stage === "bonding") {
-    return { level: "done", label: "装着段階", message: "装着工程まで進んでいます", priority: 99 };
+  if (card.stage === "delivery" || card.stage === "bonding") {
+    return {
+      level: "done",
+      label: card.stage === "delivery" ? "納品済み" : "装着段階",
+      message: card.stage === "delivery" ? "納品工程まで進んでいるため、アラート対象外です" : "装着工程まで進んでいます",
+      priority: 99,
+    };
   }
 
   const need = remainingLeadDays(card.stage);

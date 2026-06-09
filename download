@@ -1,5 +1,2 @@
-node_modules
-dist
-.DS_Store
-.env.local
-.vercel
+VITE_SUPABASE_URL=https://xiflbktnmjzwdiavfdgz.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_paj79HmcbGKtvsIHdRHkjg_Nu1G53mp
